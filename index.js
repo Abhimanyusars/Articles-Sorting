@@ -27,9 +27,7 @@ class HackerNewsScraper {
     };
   }
 
-  /**
-   * Structured logging with different levels
-   */
+ 
   log(level, message, metadata = {}) {
     const logEntry = {
       level,
@@ -51,9 +49,7 @@ class HackerNewsScraper {
       metadata && Object.keys(metadata).length > 0 ? metadata : '');
   }
 
-  /**
-   * Initialize output directory and prepare for reports
-   */
+ 
   async initializeReporting() {
     try {
       await fs.mkdir(this.options.outputDir, { recursive: true });
@@ -64,29 +60,22 @@ class HackerNewsScraper {
     }
   }
 
-  /**
-   * Safe navigation with better error handling
-   */
+ 
   async safeNavigateToNext(page, currentPage) {
     try {
-      // First check if the page is still accessible
       if (page.isClosed()) {
         throw new Error('Page is closed');
       }
 
-      // Wait for any pending network activity to settle
       await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {
-        // Ignore timeout, continue anyway
       });
 
-      // Check if more link exists
       const moreLink = await page.$('a.morelink');
       if (!moreLink) {
         this.log('INFO', 'No more pages available');
         return false;
       }
 
-      // Get the href for validation
       const href = await moreLink.getAttribute('href');
       if (!href) {
         this.log('WARN', 'More link has no href attribute');
@@ -95,12 +84,9 @@ class HackerNewsScraper {
 
       this.log('INFO', `Navigating to page ${currentPage + 1}`, { href });
 
-      // Add a small delay to prevent overwhelming the server
       await page.waitForTimeout(2000);
 
-      // Use a more robust navigation approach
       try {
-        // Method 1: Use goto directly with the href
         const baseUrl = 'https://news.ycombinator.com';
         const fullUrl = href.startsWith('http') ? href : `${baseUrl}/${href}`;
 
@@ -112,22 +98,18 @@ class HackerNewsScraper {
       } catch (gotoError) {
         this.log('WARN', 'Direct navigation failed, trying click method', { error: gotoError.message });
 
-        // Method 2: Fallback to click with waitForURL
         const currentUrl = page.url();
         await moreLink.click();
 
-        // Wait for URL to change
         await page.waitForFunction(
           (oldUrl) => window.location.href !== oldUrl,
           currentUrl,
           { timeout: this.options.navigationTimeout }
         );
 
-        // Wait for content to load
         await page.waitForLoadState('domcontentloaded', { timeout: this.options.pageTimeout });
       }
 
-      // Verify we have articles on the new page
       await this.waitForArticles(page);
 
       this.log('INFO', `Successfully navigated to page ${currentPage + 1}`);
@@ -143,12 +125,9 @@ class HackerNewsScraper {
     }
   }
 
-  /**
-   * Wait for articles to load with multiple fallback strategies
-   */
+
   async waitForArticles(page) {
     try {
-      // Primary: Wait for article rows
       await page.waitForSelector('tr.athing', { timeout: 20000 });
 
       // Verify we actually have articles
@@ -197,9 +176,7 @@ class HackerNewsScraper {
     }
   }
 
-  /**
-   * Enhanced article scraping with better error handling
-   */
+ 
   async scrapeArticlesWithBrowser(browserType) {
     const performanceMetrics = {
       browserType,
@@ -500,9 +477,7 @@ class HackerNewsScraper {
     }
   }
 
-  /**
-   * Validate chronological sorting of articles
-   */
+
   validateSorting(articles) {
     const sortingErrors = [];
 
@@ -523,9 +498,7 @@ class HackerNewsScraper {
     return sortingErrors;
   }
 
-  /**
-   * Parse timestamp with multiple format support
-   */
+  
   parseTimestamp(timestamp) {
     try {
       // Handle ISO format
@@ -557,9 +530,7 @@ class HackerNewsScraper {
     }
   }
 
-  /**
-   * Run tests across all configured browsers
-   */
+
   async runAllTests() {
     this.results.startTime = new Date().toISOString();
     this.log('INFO', 'Starting comprehensive validation across all browsers', {
@@ -611,9 +582,7 @@ class HackerNewsScraper {
     };
   }
 
-  /**
-   * Generate detailed text report
-   */
+
   async generateTextReport() {
     const report = [
       '='.repeat(80),
@@ -666,9 +635,7 @@ class HackerNewsScraper {
   }
 
 
-  /**
-   * Generate HTML report with styling
-   */
+
   async generateHTMLReport() {
     const html = `
 <!DOCTYPE html>
@@ -774,9 +741,7 @@ class HackerNewsScraper {
     this.log('INFO', 'HTML report generated', { path: reportPath });
   }
 
-  /**
-   * Generate JSON report for programmatic access
-   */
+
   async generateJSONReport() {
     const reportPath = path.join(this.options.outputDir, 'validation-report.json');
     await fs.writeFile(reportPath, JSON.stringify(this.results, null, 2));
@@ -784,9 +749,7 @@ class HackerNewsScraper {
   }
 }
 
-/**
- * Main execution function
- */
+
 async function main() {
   const scraper = new HackerNewsScraper({
     targetArticles: 100,
